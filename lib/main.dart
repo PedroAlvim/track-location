@@ -53,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 OutlinedButton.icon(
-                  onPressed: _getLivePosition,
+                  onPressed: _startTrackLocation,
                   icon: const Icon(Icons.gps_fixed),
                   label: const Text("ON"),
                 ),
@@ -129,15 +129,17 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
-  Future<void> _getLivePosition() async {
-    const LocationSettings locationSettings = LocationSettings();
+  Future<void> _startTrackLocation() async {
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
 
-    Geolocator.getPositionStream(locationSettings: locationSettings)
+    Geolocator.getPositionStream(locationSettings: const LocationSettings())
         .listen((Position? position) {
       setState(() => _currentPosition = position);
       setState(() => _now = DateTime.now());
+      debugPrint("Lat: ${position!.latitude}");
+      debugPrint("Long: ${position.longitude}");
+      debugPrint("data: ${DateTime.now()}");
     });
   }
 }
