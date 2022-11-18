@@ -30,6 +30,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Position? _currentPosition;
+  DateTime? _now;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 OutlinedButton.icon(
-                  onPressed: _getCurrentPosition,
+                  onPressed: _getLivePosition,
                   icon: const Icon(Icons.gps_fixed),
                   label: const Text("ON"),
                 ),
@@ -77,6 +78,10 @@ class _MyHomePageState extends State<MyHomePage> {
               'LNG: ${_currentPosition?.longitude ?? ""}',
               textAlign: TextAlign.center,
             ),
+            Text(
+              'Date: $_now',
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -90,9 +95,12 @@ class _MyHomePageState extends State<MyHomePage> {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-              'Location services are disabled. Please enable the services')));
+              'Location services are disabled. Please enable the services'),
+        ),
+      );
       return false;
     }
     permission = await Geolocator.checkPermission();
@@ -101,28 +109,35 @@ class _MyHomePageState extends State<MyHomePage> {
       if (permission == LocationPermission.denied) {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied')));
+          const SnackBar(
+            content: Text('Location permissions are denied'),
+          ),
+        );
         return false;
       }
     }
     if (permission == LocationPermission.deniedForever) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
           content: Text(
-              'Location permissions are permanently denied, we cannot request permissions.')));
+              'Location permissions are permanently denied, we cannot request permissions.'),
+        ),
+      );
       return false;
     }
     return true;
   }
 
-  Future<void> _getCurrentPosition() async {
+  Future<void> _getLivePosition() async {
+    const LocationSettings locationSettings = LocationSettings();
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
-    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-        .then((Position position) {
+
+    Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen((Position? position) {
       setState(() => _currentPosition = position);
-    }).catchError((e) {
-      debugPrint(e);
+      setState(() => _now = DateTime.now());
     });
   }
 }
