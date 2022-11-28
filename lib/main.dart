@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
 
 void main() {
@@ -31,6 +34,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Position? _currentPosition;
   DateTime? _now;
+  StreamSubscription<Position>? _stream;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +57,11 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 OutlinedButton.icon(
-                  onPressed: _startTrackLocation,
+                  onPressed: () {
+                    _foregroundTrackLocation();
+                    // _startTrackLocation();
+                    debugPrint("ON PRESS");
+                  },
                   icon: const Icon(Icons.gps_fixed),
                   label: const Text("ON"),
                 ),
@@ -61,7 +69,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.all(8.0),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    debugPrint("OFF PRESS");
+                    _cancelTrackLocation();
+                  },
                   icon: const Icon(Icons.gps_off),
                   label: const Text("OFF"),
                 )
@@ -71,15 +82,15 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: EdgeInsets.all(12.0),
             ),
             Text(
-              'LAT: ${_currentPosition?.latitude ?? ""}',
+              'LAT: ${_currentPosition?.latitude ?? "Rastreio desligado"}',
               textAlign: TextAlign.center,
             ),
             Text(
-              'LNG: ${_currentPosition?.longitude ?? ""}',
+              'LNG: ${_currentPosition?.longitude ?? "Rastreio desligado"}',
               textAlign: TextAlign.center,
             ),
             Text(
-              'Date: $_now',
+              'Date: ${_now ?? "Rastreio desligado"}',
               textAlign: TextAlign.center,
             ),
           ],
@@ -98,11 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Location services are disabled. Please enable the services'),
+            'Location services are disabled. Please enable the services',
+          ),
         ),
       );
       return false;
     }
+
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -110,18 +123,22 @@ class _MyHomePageState extends State<MyHomePage> {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location permissions are denied'),
+            content: Text(
+              'Location permissions are denied',
+            ),
           ),
         );
         return false;
       }
     }
+
     if (permission == LocationPermission.deniedForever) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Location permissions are permanently denied, we cannot request permissions.'),
+            'Location permissions are permanently denied, we cannot request permissions.',
+          ),
         ),
       );
       return false;
@@ -130,16 +147,40 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _startTrackLocation() async {
+
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
 
-    Geolocator.getPositionStream(locationSettings: const LocationSettings())
-        .listen((Position? position) {
-      setState(() => _currentPosition = position);
-      setState(() => _now = DateTime.now());
-      debugPrint("Lat: ${position!.latitude}");
-      debugPrint("Long: ${position.longitude}");
-      debugPrint("data: ${DateTime.now()}");
-    });
+    _stream?.cancel();
+
+    _stream =
+        Geolocator.getPositionStream(locationSettings: const LocationSettings())
+            .listen((Position? position) {
+          setState(() => _currentPosition = position);
+          setState(() => _now = DateTime.now());
+          debugPrint("Lat: ${position!.latitude}");
+          debugPrint("Long: ${position.longitude}");
+          debugPrint("data: ${DateTime.now()}");
+        });
+  }
+
+  Future<void> _cancelTrackLocation() async {
+    final hasPermission = await _handleLocationPermission();
+    if (!hasPermission) return;
+
+    _stream?.cancel();
+    setState(() => _currentPosition = null);
+    setState(() => _now = null);
+  }
+
+  Future<void> _foregroundTrackLocation() async {
+
+   final testeA = AndroidNotificationOptions(channelId: "channelId", channelName: "channelName");
+   const testeI = IOSNotificationOptions();
+   const testeTask = ForegroundTaskOptions();
+
+   FlutterForegroundTask.init(androidNotificationOptions: testeA, iosNotificationOptions: testeI, foregroundTaskOptions: testeTask);
+   FlutterForegroundTask.startService(notificationTitle: "teste", notificationText: "teste", callback: _startTrackLocation);
+
   }
 }

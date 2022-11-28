@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   geolocator: ^9.0.2
   geocoding: ^2.0.5
+  flutter_foreground_task: ^3.10.0
 
 dev_dependencies:
   flutter_test:
