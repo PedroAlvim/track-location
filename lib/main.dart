@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
@@ -58,7 +59,7 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 OutlinedButton.icon(
                   onPressed: () {
-                    _foregroundTrackLocation();
+                    _startTrackLocation();
                     // _startTrackLocation();
                     debugPrint("ON PRESS");
                   },
@@ -146,41 +147,62 @@ class _MyHomePageState extends State<MyHomePage> {
     return true;
   }
 
-  Future<void> _startTrackLocation() async {
-
-    final hasPermission = await _handleLocationPermission();
-    if (!hasPermission) return;
-
-    _stream?.cancel();
-
-    _stream =
-        Geolocator.getPositionStream(locationSettings: const LocationSettings())
-            .listen((Position? position) {
-          setState(() => _currentPosition = position);
-          setState(() => _now = DateTime.now());
-          debugPrint("Lat: ${position!.latitude}");
-          debugPrint("Long: ${position.longitude}");
-          debugPrint("data: ${DateTime.now()}");
-        });
-  }
-
   Future<void> _cancelTrackLocation() async {
+    _stream?.cancel();
+    try {
+      FlutterForegroundTask.stopService();
+    } catch (_) {}
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
 
-    _stream?.cancel();
     setState(() => _currentPosition = null);
     setState(() => _now = null);
   }
 
-  Future<void> _foregroundTrackLocation() async {
+  Future<void> _startTrackLocation() async {
+    final hasPermission = await _handleLocationPermission();
+    if (!hasPermission) return;
 
-   final testeA = AndroidNotificationOptions(channelId: "channelId", channelName: "channelName");
-   const testeI = IOSNotificationOptions();
-   const testeTask = ForegroundTaskOptions();
+    late LocationSettings locationSettings;
 
-   FlutterForegroundTask.init(androidNotificationOptions: testeA, iosNotificationOptions: testeI, foregroundTaskOptions: testeTask);
-   FlutterForegroundTask.startService(notificationTitle: "teste", notificationText: "teste", callback: _startTrackLocation);
+    _stream?.cancel();
 
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      locationSettings = AndroidSettings(
+          accuracy: LocationAccuracy.high,
+          forceLocationManager: true,
+          intervalDuration: const Duration(seconds: 3),
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationText:
+            "the app will continue to receive your location",
+            notificationTitle: "Running in Background",
+            enableWakeLock: true,
+          )
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+      locationSettings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        activityType: ActivityType.fitness,
+        pauseLocationUpdatesAutomatically: true,
+        showBackgroundLocationIndicator: false,
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 100,
+      );
+    }
+
+    var geoLocator =
+        Geolocator.getPositionStream(locationSettings: locationSettings);
+
+    _stream = geoLocator.listen((Position? position) {
+      setState(() => _currentPosition = position);
+      setState(() => _now = DateTime.now());
+
+      debugPrint("Lat: ${position!.latitude}");
+      debugPrint("Long: ${position.longitude}");
+      debugPrint("data: ${DateTime.now()}");
+    });
   }
 }
