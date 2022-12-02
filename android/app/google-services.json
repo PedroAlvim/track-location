@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "674229634836",
+    "project_id": "fcm-sentry",
+    "storage_bucket": "fcm-sentry.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:674229634836:android:465b78eddc581206936401",
+        "android_client_info": {
+          "package_name": "com.example.track_location"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "674229634836-jliiqjrf1sl8no9ttv81jnp6u06sb254.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgM-BgMQv4pks6_dtDwne4oNI0Q8Ap4SM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "674229634836-jliiqjrf1sl8no9ttv81jnp6u06sb254.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

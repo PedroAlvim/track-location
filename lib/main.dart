@@ -1,11 +1,21 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
 
-void main() {
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  final token = await FirebaseMessaging.instance.getToken();
+  debugPrint("Token: $token");
   runApp(const MyApp());
 }
 
@@ -39,6 +49,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseMessaging.onMessage.listen((event) {
+      debugPrint("Event: $event");
+
+      _showNotificationActionEvent();
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -60,7 +76,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 OutlinedButton.icon(
                   onPressed: () {
                     _startTrackLocation();
-                    // _startTrackLocation();
                     debugPrint("ON PRESS");
                   },
                   icon: const Icon(Icons.gps_fixed),
@@ -159,6 +174,16 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() => _now = null);
   }
 
+  void _showNotificationActionEvent() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'EU CHEGUEI AQUI',
+        ),
+      ),
+    );
+  }
+
   Future<void> _startTrackLocation() async {
     final hasPermission = await _handleLocationPermission();
     if (!hasPermission) return;
@@ -173,13 +198,12 @@ class _MyHomePageState extends State<MyHomePage> {
           forceLocationManager: true,
           intervalDuration: const Duration(seconds: 3),
           foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationText:
-            "the app will continue to receive your location",
+            notificationText: "the app will continue to receive your location",
             notificationTitle: "Running in Background",
             enableWakeLock: true,
-          )
-      );
-    } else if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+          ));
+    } else if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
       locationSettings = AppleSettings(
         accuracy: LocationAccuracy.high,
         activityType: ActivityType.fitness,

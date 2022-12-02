@@ -37,6 +37,9 @@ dependencies:
   geolocator: ^9.0.2
   geocoding: ^2.0.5
   flutter_foreground_task: ^3.10.0
+  firebase_messaging: ^14.1.2
+  firebase_core: ^2.3.0
+  firebase_analytics: ^10.0.6
 
 dev_dependencies:
   flutter_test:
